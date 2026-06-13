@@ -51,7 +51,7 @@ function formatFiles(files) {
   if (!files || files.length === 0) return null;
   const shown = files.slice(0, 3);
   const extra = files.length - shown.length;
-  let out = shown.map((f) => `${f}`).join("\n");
+  let out = shown.map((f) => `📁 ${f}`).join("\n");
   if (extra > 0) out += `\n*+${extra} more*`;
   return out;
 }
@@ -69,7 +69,12 @@ function collectFiles(commits) {
 function pushType(payload) {
   if (payload.forced) return "force";
   const msg = payload.head_commit?.message?.toLowerCase() || "";
-  if (msg.startsWith("merge") || msg.includes("merged")) return "merge";
+  if (
+    msg.startsWith("merge pull request") ||
+    msg.startsWith("merge branch") ||
+    msg.startsWith("merged") ||
+    msg.includes("merged into")
+  ) return "merge";
   return "normal";
 }
 
@@ -81,7 +86,12 @@ function buildPushEmbed(payload, repoPath) {
   const repoUrl  = repo?.html_url || "";
   const repoName = repo?.full_name || repoPath;
   const branch   = (payload.ref || "refs/heads/unknown").replace("refs/heads/", "");
-  const commits  = payload.commits || [];
+
+  // On merges, commits array can be empty — fall back to head_commit
+  const commits  = (payload.commits && payload.commits.length > 0)
+    ? payload.commits
+    : (payload.head_commit ? [payload.head_commit] : []);
+
   const head     = payload.head_commit;
 
   const avatarUrl = payload.sender?.avatar_url ? `${payload.sender.avatar_url}&size=64` : null;
@@ -107,19 +117,18 @@ function buildPushEmbed(payload, repoPath) {
     const extra    = commits.length - shown.length;
     const lines    = shown.map((c) => `🔗 ${shortMessage(c.message)}`).join("\n");
     const overflow = extra > 0 ? `\n*+${extra} more*` : "";
-    embed.addFields({ name: `${commits.length} Commit${commits.length !== 1 ? "s" : ""}`, value: lines + overflow });
+    embed.addFields({ name: "Commits", value: lines + overflow });
   }
 
   const fileBlock = formatFiles(collectFiles(commits));
   if (fileBlock) {
-    embed.addFields({ name: "📁 Files", value: fileBlock });
+    embed.addFields({ name: "Files", value: fileBlock });
   }
 
   embed.setTimestamp(head?.timestamp ? new Date(head.timestamp) : new Date());
   return embed;
 }
 
-// Wait for Discord client to be ready, up to 30 seconds
 function waitForClient(client, timeout = 30000) {
   return new Promise((resolve, reject) => {
     if (client.isReady()) return resolve();
@@ -154,16 +163,18 @@ function startWebhookServer(client) {
       res.sendStatus(200);
 
       if (event !== "push") return;
-      if (payload.deleted && (!payload.commits || payload.commits.length === 0)) return;
+
+      // Only skip actual branch deletions, not merges
+      if (payload.deleted) return;
 
       try {
-        // Wait for Discord to be ready before sending
         await waitForClient(client);
 
         const channel = await client.channels.fetch(repo.channelId);
         if (!channel?.isTextBased()) {
           return console.error(`[FETCHER] Channel ${repo.channelId} is not a text channel.`);
         }
+
         await channel.send({ embeds: [buildPushEmbed(payload, repo.path)] });
         console.log(`[FETCHER] Push embed sent → ${repo.path}`);
       } catch (err) {
