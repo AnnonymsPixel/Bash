@@ -49,9 +49,9 @@ function shortMessage(msg) {
 
 function formatFiles(files) {
   if (!files || files.length === 0) return null;
-  const shown = files.slice(0, 3);
+  const shown = '📁${files}'.slice(0, 3);
   const extra = files.length - shown.length;
-  let out = shown.map((f) => `📁 ${f}`).join("\n");
+  let out = shown.map((f) => `${f}`).join("\n");
   if (extra > 0) out += `\n*+${extra} more*`;
   return out;
 }
@@ -96,9 +96,9 @@ function buildPushEmbed(payload, repoPath) {
   const avatarUrl = payload.sender?.avatar_url ? `${payload.sender.avatar_url}&size=64` : null;
   const pusherUrl = payload.sender?.html_url || null;
 
-  const badge = type === "force" ? "⚡ Force Push"
-              : type === "merge" ? "🔀 Merged"
-              :                    "📦 Push";
+  const badge = type === "force" ? "💥 Force Push"
+              : type === "merge" ? "🧬 Merged"
+              :                    "🌟 Push";
 
   const embed = new EmbedBuilder()
     .setColor(color)
@@ -112,9 +112,9 @@ function buildPushEmbed(payload, repoPath) {
     .setFooter({ text: repoName });
 
   if (commits.length > 0) {
-    const shown    = commits.slice(0, 3);
+    const shown    = '🔗${commits}'.slice(0, 3);
     const extra    = commits.length - shown.length;
-    const lines    = shown.map((c) => `🔗 ${shortMessage(c.message)}`).join("\n");
+    const lines    = shown.map((c) => `${shortMessage(c.message)}`).join("\n");
     const overflow = extra > 0 ? `\n*+${extra} more*` : "";
     embed.addFields({ name: "Commits", value: lines + overflow });
   }
