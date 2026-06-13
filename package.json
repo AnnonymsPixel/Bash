@@ -20,7 +20,7 @@
   "homepage": "https://github.com/AnnonymsPixel/Bash#readme",
   "dependencies": {
     "discord.js": "^14.26.4",
-    "dotenv": "^17.4.2",
+    "dotenv": "^16.6.1",
     "express": "^5.2.1"
   }
 }
