@@ -1,4 +1,3 @@
-require("dotenv").config();
 const express = require("express");
 const crypto = require("crypto");
 const { EmbedBuilder } = require("discord.js");
@@ -32,7 +31,7 @@ function loadRepoConfigs() {
 function verifySignature(secret, rawBody, sigHeader) {
   if (!secret) return true;
   if (!sigHeader) return false;
-  const expected = "sha356=" + crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
+  const expected = "sha256=" + crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
   try {
     return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(sigHeader));
   } catch {
@@ -120,6 +119,18 @@ function buildPushEmbed(payload, repoPath) {
   return embed;
 }
 
+// Wait for Discord client to be ready, up to 30 seconds
+function waitForClient(client, timeout = 30000) {
+  return new Promise((resolve, reject) => {
+    if (client.isReady()) return resolve();
+    const timer = setTimeout(() => reject(new Error("Discord client not ready after 30s")), timeout);
+    client.once("clientReady", () => {
+      clearTimeout(timer);
+      resolve();
+    });
+  });
+}
+
 function startWebhookServer(client) {
   const app   = express();
   const PORT  = process.env.PORT || process.env.WEBHOOK_PORT || 10000;
@@ -139,7 +150,6 @@ function startWebhookServer(client) {
 
       const event   = req.headers["x-github-event"];
       const payload = req.body;
-      console.log(`[FETCHER] Event: ${event}, Channel: ${repo.channelId}, Client ready: ${client.isReady()}`);
 
       res.sendStatus(200);
 
@@ -147,8 +157,13 @@ function startWebhookServer(client) {
       if (payload.deleted && (!payload.commits || payload.commits.length === 0)) return;
 
       try {
+        // Wait for Discord to be ready before sending
+        await waitForClient(client);
+
         const channel = await client.channels.fetch(repo.channelId);
-        if (!channel?.isTextBased()) return;
+        if (!channel?.isTextBased()) {
+          return console.error(`[FETCHER] Channel ${repo.channelId} is not a text channel.`);
+        }
         await channel.send({ embeds: [buildPushEmbed(payload, repo.path)] });
         console.log(`[FETCHER] Push embed sent → ${repo.path}`);
       } catch (err) {
