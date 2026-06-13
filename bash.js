@@ -13,6 +13,8 @@ const client = new Client({
 
 client.commands = new Collection();
 
+startWebhookServer(client);
+
 client.once("ready", async () => {
   console.log(`\n╔══════════════════════════════╗`);
   console.log(`║  BASH online as ${client.user.tag.padEnd(13)}║`);
@@ -24,7 +26,6 @@ client.once("ready", async () => {
   });
 
   await registerSlashCommands();
-  startWebhookServer(client);
 });
 
 client.on("interactionCreate", async (interaction) => {
@@ -34,7 +35,6 @@ client.on("interactionCreate", async (interaction) => {
 async function registerSlashCommands() {
   const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
   const commands = [registerTicketCommand()];
-
   try {
     await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), {
       body: commands,
