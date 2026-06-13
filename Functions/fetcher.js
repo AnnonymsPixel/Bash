@@ -122,7 +122,7 @@ function buildPushEmbed(payload, repoPath) {
 
 function startWebhookServer(client) {
   const app   = express();
-  const PORT  = process.env.WEBHOOK_PORT;
+  const PORT  = process.env.PORT || process.env.WEBHOOK_PORT || 10000;
   const repos = loadRepoConfigs();
 
   app.use(express.json({
@@ -159,8 +159,8 @@ function startWebhookServer(client) {
   app.get("/health", (_req, res) => res.json({ status: "ok", repos: repos.length }));
 
   app.listen(PORT, "0.0.0.0", () => {
-  console.log(`[FETCHER] Webhook server on port ${PORT}`);
-});
+    console.log(`[FETCHER] Webhook server on port ${PORT}`);
+  });
 }
 
 module.exports = { startWebhookServer };
