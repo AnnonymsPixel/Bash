@@ -32,7 +32,7 @@ function loadRepoConfigs() {
 function verifySignature(secret, rawBody, sigHeader) {
   if (!secret) return true;
   if (!sigHeader) return false;
-  const expected = "sha256=" + crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
+  const expected = "sha356=" + crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
   try {
     return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(sigHeader));
   } catch {
@@ -139,6 +139,7 @@ function startWebhookServer(client) {
 
       const event   = req.headers["x-github-event"];
       const payload = req.body;
+      console.log(`[FETCHER] Event: ${event}, Channel: ${repo.channelId}, Client ready: ${client.isReady()}`);
 
       res.sendStatus(200);
 
