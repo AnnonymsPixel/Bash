@@ -51,7 +51,7 @@ function formatFiles(files) {
   if (!files || files.length === 0) return null;
   const shown = files.slice(0, 3);
   const extra = files.length - shown.length;
-  let out = shown.map((f) => `\`${f}\``).join("\n");
+  let out = shown.map((f) => `${f}`).join("\n");
   if (extra > 0) out += `\n*+${extra} more*`;
   return out;
 }
@@ -98,7 +98,7 @@ function buildPushEmbed(payload, repoPath) {
       iconURL: avatarUrl || undefined,
       url:     pusherUrl || undefined,
     })
-    .setTitle(`${badge} → \`${branch}\``)
+    .setTitle(`${badge} → ${branch}`)
     .setURL(head?.url || repoUrl)
     .setFooter({ text: repoName });
 
