@@ -4,23 +4,27 @@ const { startWebhookServer } = require("./Functions/fetcher");
 const { registerTicketCommand, handleTicketInteraction } = require("./Functions/tickter");
 
 process.on("unhandledRejection", (err) => {
-  console.error("[BASH] Unhandled rejection:", err);
+  console.error("[BASH] Unhandled rejection:", err?.message || err);
 });
 
 process.on("uncaughtException", (err) => {
-  console.error("[BASH] Uncaught exception:", err);
+  console.error("[BASH] Uncaught exception:", err?.message || err);
 });
 
 const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-  ],
+  intents: [GatewayIntentBits.Guilds],
 });
 
 client.commands = new Collection();
 
-// Start Express immediately so Render detects the port
+// Start Express immediately — Render needs port open fast
 startWebhookServer(client);
+
+client.on("debug", (msg) => {
+  if (msg.includes("Identifying") || msg.includes("READY") || msg.includes("session")) {
+    console.log("[DISCORD]", msg);
+  }
+});
 
 client.once("clientReady", async (c) => {
   console.log(`\n╔══════════════════════════════╗`);
@@ -55,4 +59,7 @@ async function registerSlashCommands() {
 console.log("[BASH] Attempting Discord login...");
 client.login(process.env.DISCORD_TOKEN).catch((err) => {
   console.error("[BASH] Login failed:", err.message);
+  process.exit(1);
 });
+
+
