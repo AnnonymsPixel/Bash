@@ -88,9 +88,9 @@ function buildPushEmbed(payload, repoPath) {
   const avatarUrl = payload.sender?.avatar_url ? `${payload.sender.avatar_url}&size=64` : null;
   const pusherUrl = payload.sender?.html_url || null;
 
-  const badge = type === "force" ? "⚡ Force Push"
-              : type === "merge" ? "🔀 Merged"
-              :                    "📦 Push";
+  const badge = type === "force" ? "☢️ Force Push"
+              : type === "merge" ? "🧬 Merged"
+              :                    "🌟 Push";
 
   const embed = new EmbedBuilder()
     .setColor(color)
