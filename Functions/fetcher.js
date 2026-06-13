@@ -1,5 +1,5 @@
 const express = require("express");
-const crypto = require("crypto");
+const crypto  = require("crypto");
 const { EmbedBuilder } = require("discord.js");
 
 const COLORS = {
@@ -87,19 +87,18 @@ function buildPushEmbed(payload, repoPath) {
   const repoName = repo?.full_name || repoPath;
   const branch   = (payload.ref || "refs/heads/unknown").replace("refs/heads/", "");
 
-  // On merges, commits array can be empty — fall back to head_commit
-  const commits  = (payload.commits && payload.commits.length > 0)
+  const commits = (payload.commits && payload.commits.length > 0)
     ? payload.commits
     : (payload.head_commit ? [payload.head_commit] : []);
 
-  const head     = payload.head_commit;
+  const head = payload.head_commit;
 
   const avatarUrl = payload.sender?.avatar_url ? `${payload.sender.avatar_url}&size=64` : null;
   const pusherUrl = payload.sender?.html_url || null;
 
-  const badge = type === "force" ? "☢️ Force Push"
-              : type === "merge" ? "🧬 Merged"
-              :                    "🌟 Push";
+  const badge = type === "force" ? "⚡ Force Push"
+              : type === "merge" ? "🔀 Merged"
+              :                    "📦 Push";
 
   const embed = new EmbedBuilder()
     .setColor(color)
@@ -129,14 +128,16 @@ function buildPushEmbed(payload, repoPath) {
   return embed;
 }
 
-function waitForClient(client, timeout = 30000) {
-  return new Promise((resolve, reject) => {
+// Wait for Discord with no timeout — polls every 500ms until ready
+function waitForClient(client) {
+  return new Promise((resolve) => {
     if (client.isReady()) return resolve();
-    const timer = setTimeout(() => reject(new Error("Discord client not ready after 30s")), timeout);
-    client.once("clientReady", () => {
-      clearTimeout(timer);
-      resolve();
-    });
+    const interval = setInterval(() => {
+      if (client.isReady()) {
+        clearInterval(interval);
+        resolve();
+      }
+    }, 500);
   });
 }
 
@@ -163,8 +164,6 @@ function startWebhookServer(client) {
       res.sendStatus(200);
 
       if (event !== "push") return;
-
-      // Only skip actual branch deletions, not merges
       if (payload.deleted) return;
 
       try {
