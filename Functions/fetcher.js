@@ -158,9 +158,9 @@ function startWebhookServer(client) {
 
   app.get("/health", (_req, res) => res.json({ status: "ok", repos: repos.length }));
 
-  app.listen(PORT, () => {
-    console.log(`[FETCHER] Webhook server on port ${PORT}`);
-  });
+  app.listen(PORT, "0.0.0.0", () => {
+  console.log(`[FETCHER] Webhook server on port ${PORT}`);
+});
 }
 
 module.exports = { startWebhookServer };
