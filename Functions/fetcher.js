@@ -104,9 +104,9 @@ function buildPushEmbed(payload, repoPath) {
     .setFooter({ text: repoName });
 
   if (commits.length > 0) {
-    const shown  = commits.slice(0, 3);
-    const extra  = commits.length - shown.length;
-    const lines  = shown.map((c) => `🔗 ${shortMessage(c.message)}`).join("\n");
+    const shown    = commits.slice(0, 3);
+    const extra    = commits.length - shown.length;
+    const lines    = shown.map((c) => `🔗 ${shortMessage(c.message)}`).join("\n");
     const overflow = extra > 0 ? `\n*+${extra} more*` : "";
     embed.addFields({ name: `${commits.length} Commit${commits.length !== 1 ? "s" : ""}`, value: lines + overflow });
   }
@@ -121,8 +121,8 @@ function buildPushEmbed(payload, repoPath) {
 }
 
 function startWebhookServer(client) {
-  const app  = express();
-  const PORT = process.env.WEBHOOK_PORT || 3000;
+  const app   = express();
+  const PORT  = process.env.WEBHOOK_PORT;
   const repos = loadRepoConfigs();
 
   app.use(express.json({
@@ -137,13 +137,13 @@ function startWebhookServer(client) {
         return res.status(401).json({ error: "invalid signature" });
       }
 
-      const event = req.headers["x-github-event"];
+      const event   = req.headers["x-github-event"];
+      const payload = req.body;
+
       res.sendStatus(200);
 
       if (event !== "push") return;
       if (payload.deleted && (!payload.commits || payload.commits.length === 0)) return;
-
-      const payload = req.body;
 
       try {
         const channel = await client.channels.fetch(repo.channelId);
