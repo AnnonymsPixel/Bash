@@ -49,9 +49,9 @@ function shortMessage(msg) {
 
 function formatFiles(files) {
   if (!files || files.length === 0) return null;
-  const shown = '📁${files}'.slice(0, 3);
+  const shown = files.slice(0, 3); // ✅ Fixed: was '📁${files}'.slice(0, 3)
   const extra = files.length - shown.length;
-  let out = shown.map((f) => `${f}`).join("\n");
+  let out = shown.map((f) => `📁 \`${f}\``).join("\n"); // ✅ emoji moved here
   if (extra > 0) out += `\n*+${extra} more*`;
   return out;
 }
@@ -91,10 +91,9 @@ function buildPushEmbed(payload, repoPath) {
     ? payload.commits
     : (payload.head_commit ? [payload.head_commit] : []);
 
-  const head = payload.head_commit;
-
-  const avatarUrl = payload.sender?.avatar_url ? `${payload.sender.avatar_url}&size=64` : null;
-  const pusherUrl = payload.sender?.html_url || null;
+  const head       = payload.head_commit;
+  const avatarUrl  = payload.sender?.avatar_url ? `${payload.sender.avatar_url}&size=64` : null;
+  const pusherUrl  = payload.sender?.html_url || null;
 
   const badge = type === "force" ? "💥 Force Push"
               : type === "merge" ? "🧬 Merged"
@@ -112,9 +111,9 @@ function buildPushEmbed(payload, repoPath) {
     .setFooter({ text: repoName });
 
   if (commits.length > 0) {
-    const shown    = '🔗${commits}'.slice(0, 3);
+    const shown    = commits.slice(0, 3); // ✅ Fixed: was '🔗${commits}'.slice(0, 3)
     const extra    = commits.length - shown.length;
-    const lines    = shown.map((c) => `${shortMessage(c.message)}`).join("\n");
+    const lines    = shown.map((c) => `🔗 ${shortMessage(c.message)}`).join("\n"); // ✅ emoji moved here
     const overflow = extra > 0 ? `\n*+${extra} more*` : "";
     embed.addFields({ name: "Commits", value: lines + overflow });
   }
@@ -128,7 +127,7 @@ function buildPushEmbed(payload, repoPath) {
   return embed;
 }
 
-// Wait for Discord with no timeout — polls every 500ms until ready
+// Polls every 500ms until the Discord client is ready
 function waitForClient(client) {
   return new Promise((resolve) => {
     if (client.isReady()) return resolve();
@@ -168,12 +167,10 @@ function startWebhookServer(client) {
 
       try {
         await waitForClient(client);
-
         const channel = await client.channels.fetch(repo.channelId);
         if (!channel?.isTextBased()) {
           return console.error(`[FETCHER] Channel ${repo.channelId} is not a text channel.`);
         }
-
         await channel.send({ embeds: [buildPushEmbed(payload, repo.path)] });
         console.log(`[FETCHER] Push embed sent → ${repo.path}`);
       } catch (err) {
